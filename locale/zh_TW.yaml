@@ -1,0 +1,11 @@
+__langname: 正體中文
+addons manager: 插件管理員
+activated package name: 已啟用套件名稱
+activate: 啟用
+add new package: 新增套件
+delete: 刪除
+package name or package git url: 套件名稱或套件 Git URL
+update: 更新
+version name *unnecessary: 版本名稱 *非必要
+need to restart hydrooj to make changes work: 需要重新啟動 HydroOJ 以使更改生效
+manage_addons: 管理插件
