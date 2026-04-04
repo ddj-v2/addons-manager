@@ -4,9 +4,14 @@
     <div class="section">
         <div class="section__header">
             <h1 class="section__title" data-heading>{{ _('addons manager') }}</h1>
-            <h2 class="section__subtitle" data-heading style="color: #ef4444; font-weight: 600;">
-                {{ _('need to restart hydrooj to make changes work') }}
-            </h2>
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px;">
+                <h2 class="section__subtitle" data-heading style="color: #ef4444; font-weight: 600; margin: 0;">
+                    {{ _('need to restart hydrooj to make changes work') }}
+                </h2>
+                <a href="/manage/addons/market" class="primary button" style="font-size: 0.85em; padding: 6px 14px; text-decoration: none;">
+                    🛒 {{ _('addon market') }}
+                </a>
+            </div>
             <form method="post" class="activate-package-form">
                 <div class="activate-package-item">
                     <input type="text" name="package_name" placeholder="{{ _('package name or package git url') }}" required>

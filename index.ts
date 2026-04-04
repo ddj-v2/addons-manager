@@ -17,7 +17,9 @@ const ADDON_JSON = 'addon.json';
 const ADDON_LOCKED_JSON = 'addon-locked.json';
 const ADDONS_DIR = 'addons/';
 const TEMPLATE_NAME = 'manage_addons.html';
+const MARKET_TEMPLATE_NAME = 'manage_addons_market.html';
 const ROUTE_PATH = '/manage/addons';
+const MARKET_ROUTE_PATH = '/manage/addons/market';
 const DEFAULT_BRANCH = 'main';
 const LOG_PREFIX = '[Addons Manager]';
 
@@ -41,6 +43,16 @@ type AddonsManagerModel = {
     getActivedPackages: () => Promise<string[]>;
     getLockedPackages: () => Promise<string[]>;
     localPackageName: (name: string) => string;
+};
+
+type AddonEntry = {
+    title: string;
+    description: string;
+    npmPackage: string | null;
+    gitUrl: string | null;
+    author: string;
+    url: string;
+    upvotes: number;
 };
 
 // Validators
@@ -177,6 +189,87 @@ class AddonsManagerHandler extends Handler {
     }
 }
 
+function parseAddonEntry(discussion: any): AddonEntry | null {
+    const { title, body, url, author, upvoteCount } = discussion;
+    const npmMatch = (body || '').match(/^npm:\s*(.+)$/m);
+    const gitMatch = (body || '').match(/^git:\s*(.+)$/m);
+    const npmPackage = npmMatch ? npmMatch[1].trim() : null;
+    const gitUrl = gitMatch ? gitMatch[1].trim() : null;
+    if (!npmPackage && !gitUrl) return null;
+    const description = (body || '')
+        .split('\n')
+        .filter((line: string) => !line.match(/^(npm|git):\s*/))
+        .join('\n')
+        .trim();
+    return {
+        title,
+        description,
+        npmPackage,
+        gitUrl,
+        author: author?.login || 'unknown',
+        url,
+        upvotes: upvoteCount || 0,
+    };
+}
+
+async function fetchMarketAddons(owner: string, repo: string, token: string, limit: number): Promise<AddonEntry[]> {
+    const query = `{
+  repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(repo)}) {
+    discussions(first: ${limit}, orderBy: {field: UPDATED_AT, direction: DESC}) {
+      nodes {
+        title
+        body
+        url
+        author { login }
+        upvoteCount
+      }
+    }
+  }
+}`;
+    const req = superagent
+        .post('https://api.github.com/graphql')
+        .set('Content-Type', 'application/json')
+        .set('User-Agent', 'HydroOJ-Addons-Manager');
+    if (token) req.set('Authorization', `Bearer ${token}`);
+    const res = await req.send({ query });
+    const nodes: any[] = res.body?.data?.repository?.discussions?.nodes || [];
+    return nodes.map(parseAddonEntry).filter((e): e is AddonEntry => e !== null);
+}
+
+class AddonsMarketHandler extends Handler {
+    private static marketOwner: string;
+    private static marketRepo: string;
+    private static marketToken: string;
+    private static fetchLimit: number;
+
+    static setConfig(owner: string, repo: string, token: string, fetchLimit: number) {
+        this.marketOwner = owner;
+        this.marketRepo = repo;
+        this.marketToken = token;
+        this.fetchLimit = Math.min(100, Math.max(1, fetchLimit));
+    }
+
+    @requireSudo
+    async get() {
+        this.response.template = MARKET_TEMPLATE_NAME;
+        let addons: AddonEntry[] = [];
+        let error: string | null = null;
+        try {
+            addons = await fetchMarketAddons(
+                AddonsMarketHandler.marketOwner,
+                AddonsMarketHandler.marketRepo,
+                AddonsMarketHandler.marketToken,
+                AddonsMarketHandler.fetchLimit,
+            );
+        } catch (err) {
+            error = err instanceof Error ? err.message : 'Failed to fetch addon market';
+            console.error(`${LOG_PREFIX} Market fetch error:`, err);
+        }
+        this.response.body = { addons, error, marketOwner: AddonsMarketHandler.marketOwner, marketRepo: AddonsMarketHandler.marketRepo };
+        this.renderHTML(this.response.template, { title: 'addon market' });
+    }
+}
+
 async function sendCommand(command: string, args: string[], cwd: string): Promise<CommandResult> {
     return new Promise((resolve) => {
         const child = spawn(command, args, { cwd });
@@ -206,11 +299,16 @@ async function sendCommand(command: string, args: string[], cwd: string): Promis
 export default class AddonsManagerService extends Service {
     static Config = Schema.object({
         pathToHydro: Schema.string().description('Path to Hydro').required(),
+        marketGithubOwner: Schema.string().description('GitHub owner for addon market discussions').default('Bryan0324'),
+        marketGithubRepo: Schema.string().description('GitHub repo for addon market discussions').default('hydrooj-addons-market'),
+        marketGithubToken: Schema.string().description('GitHub personal access token for addon market API').default(''),
+        marketFetchLimit: Schema.number().description('Max number of addon discussions to fetch from GitHub (1–100)').default(100),
     });
 
     constructor(ctx: Context, config: ReturnType<typeof AddonsManagerService.Config>) {
         super(ctx, 'hydrooj-addons-manager');
         ctx.Route('manage_addons', ROUTE_PATH, AddonsManagerHandler, PRIV.PRIV_ALL);
+        ctx.Route('manage_addons_market', MARKET_ROUTE_PATH, AddonsMarketHandler, PRIV.PRIV_ALL);
         global.Hydro.ui.inject('ControlPanel', 'manage_addons');
         this.initialize(ctx, config);
     }
@@ -218,6 +316,12 @@ export default class AddonsManagerService extends Service {
     private initialize(ctx: Context, config: ReturnType<typeof AddonsManagerService.Config>): void {
         const model = this.createModel(config);
         AddonsManagerHandler.setModel(model);
+        AddonsMarketHandler.setConfig(
+            config.marketGithubOwner,
+            config.marketGithubRepo,
+            config.marketGithubToken,
+            config.marketFetchLimit,
+        );
     }
 
     private createModel(config: ReturnType<typeof AddonsManagerService.Config>): AddonsManagerModel {
