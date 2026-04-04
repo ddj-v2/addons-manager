@@ -15,7 +15,7 @@
             {% if error %}
                 <div class="alert alert--error" style="margin-bottom: 16px; padding: 12px 16px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; color: #dc2626;">
                     <strong>{{ _('failed to load market') }}:</strong> {{ error }}
-                    <br><small>{{ _('make sure github token is configured in plugin settings') }}</small>
+                    <br><small>{{ _('check that the github repo is public and correctly configured in plugin settings') }}</small>
                 </div>
             {% endif %}
 

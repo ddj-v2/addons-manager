@@ -190,7 +190,7 @@ class AddonsManagerHandler extends Handler {
 }
 
 function parseAddonEntry(discussion: any): AddonEntry | null {
-    const { title, body, url, author, upvoteCount } = discussion;
+    const { title, body, html_url, user, upvote_count } = discussion;
     const npmMatch = (body || '').match(/^npm:\s*(.+)$/m);
     const gitMatch = (body || '').match(/^git:\s*(.+)$/m);
     const npmPackage = npmMatch ? npmMatch[1].trim() : null;
@@ -206,46 +206,31 @@ function parseAddonEntry(discussion: any): AddonEntry | null {
         description,
         npmPackage,
         gitUrl,
-        author: author?.login || 'unknown',
-        url,
-        upvotes: upvoteCount || 0,
+        author: user?.login || 'unknown',
+        url: html_url,
+        upvotes: upvote_count || 0,
     };
 }
 
-async function fetchMarketAddons(owner: string, repo: string, token: string, limit: number): Promise<AddonEntry[]> {
-    const query = `{
-  repository(owner: ${JSON.stringify(owner)}, name: ${JSON.stringify(repo)}) {
-    discussions(first: ${limit}, orderBy: {field: UPDATED_AT, direction: DESC}) {
-      nodes {
-        title
-        body
-        url
-        author { login }
-        upvoteCount
-      }
-    }
-  }
-}`;
-    const req = superagent
-        .post('https://api.github.com/graphql')
-        .set('Content-Type', 'application/json')
-        .set('User-Agent', 'HydroOJ-Addons-Manager');
-    if (token) req.set('Authorization', `Bearer ${token}`);
-    const res = await req.send({ query });
-    const nodes: any[] = res.body?.data?.repository?.discussions?.nodes || [];
+async function fetchMarketAddons(owner: string, repo: string, limit: number): Promise<AddonEntry[]> {
+    const url = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(repo)}/discussions?per_page=${limit}&sort=updated&direction=desc`;
+    const res = await superagent
+        .get(url)
+        .set('Accept', 'application/vnd.github+json')
+        .set('User-Agent', 'HydroOJ-Addons-Manager')
+        .set('X-GitHub-Api-Version', '2022-11-28');
+    const nodes: any[] = Array.isArray(res.body) ? res.body : [];
     return nodes.map(parseAddonEntry).filter((e): e is AddonEntry => e !== null);
 }
 
 class AddonsMarketHandler extends Handler {
     private static marketOwner: string;
     private static marketRepo: string;
-    private static marketToken: string;
     private static fetchLimit: number;
 
-    static setConfig(owner: string, repo: string, token: string, fetchLimit: number) {
+    static setConfig(owner: string, repo: string, fetchLimit: number) {
         this.marketOwner = owner;
         this.marketRepo = repo;
-        this.marketToken = token;
         this.fetchLimit = Math.min(100, Math.max(1, fetchLimit));
     }
 
@@ -258,11 +243,10 @@ class AddonsMarketHandler extends Handler {
             addons = await fetchMarketAddons(
                 AddonsMarketHandler.marketOwner,
                 AddonsMarketHandler.marketRepo,
-                AddonsMarketHandler.marketToken,
                 AddonsMarketHandler.fetchLimit,
             );
         } catch (err) {
-            error = err instanceof Error ? err.message : 'Failed to fetch addon market';
+            error = err instanceof Error ? err.message : 'failed to fetch addon market';
             console.error(`${LOG_PREFIX} Market fetch error:`, err);
         }
         this.response.body = { addons, error, marketOwner: AddonsMarketHandler.marketOwner, marketRepo: AddonsMarketHandler.marketRepo };
@@ -301,7 +285,6 @@ export default class AddonsManagerService extends Service {
         pathToHydro: Schema.string().description('Path to Hydro').required(),
         marketGithubOwner: Schema.string().description('GitHub owner for addon market discussions').default('Bryan0324'),
         marketGithubRepo: Schema.string().description('GitHub repo for addon market discussions').default('hydrooj-addons-market'),
-        marketGithubToken: Schema.string().description('GitHub personal access token for addon market API').default(''),
         marketFetchLimit: Schema.number().description('Max number of addon discussions to fetch from GitHub (1–100)').default(100),
     });
 
@@ -319,7 +302,6 @@ export default class AddonsManagerService extends Service {
         AddonsMarketHandler.setConfig(
             config.marketGithubOwner,
             config.marketGithubRepo,
-            config.marketGithubToken,
             config.marketFetchLimit,
         );
     }
