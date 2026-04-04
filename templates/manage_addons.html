@@ -1,133 +1,95 @@
 {% extends "manage_base.html" %}
 {% block manage_content %}
 <div class="main">
-    <style>
-    .manage-addons .section__header { display: flex; flex-direction: column; gap: 12px; }
-    .manage-addons .section__title { margin: 0; font-size: 22px; }
-    .manage-addons .section__subtitle { margin: 8px 0 4px; font-size: 16px; color: #374151; }
-
-    .manage-addons #activate-package-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
-    .manage-addons .activate-package-form { margin: 0; }
-    .manage-addons .activate-package-item {
-    display: flex; align-items: center; gap: 12px; justify-content: space-between;
-    padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff;
-    }
-    .manage-addons .activate-package-item a { font-weight: 600; color: #111827; }
-    .manage-addons .activate-package-item:hover { box-shadow: 0 1px 3px rgba(0,0,0,.06); }
-
-    .manage-addons .activate-package-item .btn { min-width: 96px; }
-    .manage-addons .activate-package-item .btn + .btn { margin-left: 8px; }
-
-    .manage-addons .activate-package-item input[type="text"] {
-    flex: 1; min-width: 160px; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 6px;
-    }
-    .manage-addons .alert { margin: 6px 0 2px; }
-
-    /* Styled buttons */
-    .manage-addons .btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 14px;
-    line-height: 1.2;
-    border: 1px solid transparent;
-    cursor: pointer;
-    transition: background-color .15s ease, color .15s ease, border-color .15s ease, box-shadow .15s ease, transform .05s ease;
-    user-select: none;
-    }
-
-    .manage-addons .btn:disabled {
-    opacity: .6;
-    cursor: not-allowed;
-    transform: none !important;
-    }
-
-    /* Primary */
-    .manage-addons .btn--primary {
-    background: #2563eb;
-    color: #fff;
-    border-color: #1d4ed8;
-    }
-    .manage-addons .btn--primary:hover { background: #1d4ed8; }
-    .manage-addons .btn--primary:active { transform: translateY(1px); }
-    .manage-addons .btn--primary:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.25);
-    }
-
-    /* Secondary */
-    .manage-addons .btn--secondary {
-    background: #ffffff;
-    color: #111827;
-    border-color: #d1d5db;
-    }
-    .manage-addons .btn--secondary:hover { background: #f3f4f6; }
-    .manage-addons .btn--secondary:active { transform: translateY(1px); }
-    .manage-addons .btn--secondary:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(17,24,39,.15);
-    }
-
-    /* Danger */
-    .manage-addons .btn--danger {
-    background: #dc2626;
-    color: #fff;
-    border-color: #b91c1c;
-    }
-    .manage-addons .btn--danger:hover { background: #b91c1c; }
-    .manage-addons .btn--danger:active { transform: translateY(1px); }
-    .manage-addons .btn--danger:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(220,38,38,.25);
-    }
-
-    /* Dark mode button tweaks */
-    @media (prefers-color-scheme: dark) {
-    .manage-addons .btn--secondary {
-        background: transparent;
-        color: #e5e7eb;
-        border-color: #374151;
-    }
-    .manage-addons .btn--secondary:hover { background: #111827; }
-    .manage-addons .btn--primary { border-color: #1e40af; }
-    .manage-addons .btn--danger { border-color: #991b1b; }
-    }
-    </style>
-
-    <div class="section manage-addons">
-    <div class="section__header">
-        <h1 class="section__title" data-heading>{{ _('addons manager') }}</h1>
-        <h2 class="section__subtitle" data-heading>{{ _('activated package name') }}</h2>
-        <h2 class="section__subtitle" data-heading style="color: #ef4444; font-weight: 600;">{{ _('need to restart hydrooj to make changes work') }}</h2>
-        <ul id="activate-package-list">
-        {% for package in packages %}
-        <li>
+    <div class="section">
+        <div class="section__header">
+            <h1 class="section__title" data-heading>{{ _('addons manager') }}</h1>
+            <h2 class="section__subtitle" data-heading style="color: #ef4444; font-weight: 600;">
+                {{ _('need to restart hydrooj to make changes work') }}
+            </h2>
             <form method="post" class="activate-package-form">
-            <div class="activate-package-item">
-                <a>{{ package }}</a>
-                <input type="text" name="package_name" value="{{ package }}" hidden >
-                {% if package not in lockedPackages %}
-                <button type="submit" name="action" value="delete" class="btn btn--danger">{{ _('delete') }}</button>
-                {% endif %}
-                <button type="submit" name="action" value="update" class="btn btn--secondary">{{ _('update') }}</button>
-            </div>
+                <div class="activate-package-item">
+                    <input type="text" name="package_name" placeholder="{{ _('package name or package git url') }}" required>
+                    <input type="text" name="package_version" placeholder="{{ _('version name *unnecessary') }}">
+                    <button type="submit" name="action" value="add"  class="expanded primary button">{{ _('activate') }}</button>
+                </div>
             </form>
-        </li>
-        {% endfor %}
-        </ul>
-        <h2 class="section__subtitle" data-heading>{{ _('add new package') }}</h2>
-        <form method="post" class="activate-package-form">
-        <div class="activate-package-item">
-            <input type="text" name="package_name" placeholder="{{ _('package name or package git url') }}" required>
-            <input type="text" name="package_version" placeholder="{{ _('version name *unnecessary') }}">
-            <button type="submit" name="action" value="add" class="btn btn--primary">{{ _('activate') }}</button>
+            
+            <h1 class="section__subtitle" data-heading>{{ _('add new package') }}</h1>
+            <h2 class="section__subtitle" data-heading>{{ _('activated package name') }}</h2>
+
+            <div class="section__body no-padding">
+                {% if not packages or packages|length == 0 %}
+                    <div class="section__body">
+                        {{ _('No activated packages.') }}
+                    </div>
+                {% else %}
+                    <div class="section__search" style="margin: 10px;">
+                        <input
+                            type="text"
+                            id="packageSearch"
+                            class="input"
+                            style="width: 240px;"
+                            placeholder="{{ _('Search by Package Name') }}"
+                        >
+                    </div>
+
+                    <div class="section__table-container">
+                        <table class="data-table section__table" id="activate-package-list">
+                            <colgroup>
+                                <col class="col--package" style="width: 50%;">
+                                <col class="col--actions">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th class="col--package">{{ _('Package Name') }}</th>
+                                    <th class="col--actions">{{ _('Actions') }}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for package in packages %}
+                                    <tr data-package="{{ package }}">
+                                        <td class="col--package">{{ package }}</td>
+                                        <td class="col--actions">
+                                            <form method="post" class="activate-package-form" style="display: inline-flex; width: 100%; gap: 5px;">
+                                                <input type="hidden" name="package_name" value="{{ package }}">
+
+                                                {% if package not in lockedPackages %}
+                                                    <button type="submit" name="action" value="delete" style="background-color: #ff0000;  width: 45%;" class="expanded primary button">
+                                                        {{ _('delete') }}
+                                                    </button>
+                                                {% endif %}
+
+                                                <button type="submit" name="action" value="update" style="width: 45%;" class="expanded primary button">
+                                                    {{ _('update') }}
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function () {
+                            const searchInput = document.getElementById('packageSearch');
+                            if (!searchInput) return;
+
+                            searchInput.addEventListener('input', function () {
+                                const filter = searchInput.value.toLowerCase();
+                                const rows = document.querySelectorAll('#activate-package-list tbody tr');
+
+                                rows.forEach(function (row) {
+                                    const name = (row.getAttribute('data-package') || '').toLowerCase();
+                                    row.style.display = !filter || name.includes(filter) ? '' : 'none';
+                                });
+                            });
+                        });
+                    </script>
+                {% endif %}
+            </div>
         </div>
-        </form>
-    </div>
     </div>
 </div>
 <script>
