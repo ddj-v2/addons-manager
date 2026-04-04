@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Submit Addon — HydroOJ Addon Market</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f9fafb;
+      --surface: #ffffff;
+      --border: #e5e7eb;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --green: #16a34a;
+      --green-hover: #15803d;
+      --text: #111827;
+      --muted: #6b7280;
+      --error: #dc2626;
+      --error-bg: #fef2f2;
+      --code-bg: #f3f4f6;
+      --radius: 8px;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 32px 16px 64px;
+    }
+
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    header .badge {
+      display: inline-block;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 14px;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+      letter-spacing: .02em;
+    }
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -.02em;
+    }
+    header p {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 1rem;
+      line-height: 1.6;
+    }
+    header a { color: var(--primary); text-decoration: none; }
+    header a:hover { text-decoration: underline; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 28px 32px;
+      margin-bottom: 24px;
+    }
+    .card h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      color: var(--text);
+    }
+
+    .field { margin-bottom: 20px; }
+    .field label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+    }
+    .field .hint {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    .field .hint code {
+      background: var(--code-bg);
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.85em;
+    }
+
+    input[type="text"],
+    input[type="url"],
+    textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 9px 12px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      color: var(--text);
+      background: var(--surface);
+      transition: border-color .15s, box-shadow .15s;
+      outline: none;
+    }
+    input[type="text"]:focus,
+    input[type="url"]:focus,
+    textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,.12);
+    }
+    input.error, textarea.error {
+      border-color: var(--error);
+    }
+    .error-msg {
+      font-size: 0.78rem;
+      color: var(--error);
+      margin-top: 4px;
+      display: none;
+    }
+    .error-msg.visible { display: block; }
+
+    textarea { resize: vertical; min-height: 90px; }
+
+    .optional {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--muted);
+      margin-left: 4px;
+    }
+
+    /* Preview */
+    .preview-label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .preview-label .copy-btn {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      color: var(--muted);
+      transition: background .15s;
+    }
+    .preview-label .copy-btn:hover { background: var(--code-bg); }
+
+    #preview {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px 16px;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: #1f2937;
+      min-height: 60px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background .15s, opacity .15s;
+    }
+    .btn:disabled { opacity: .5; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+    .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover { background: var(--code-bg); }
+
+    /* Format guide */
+    .guide {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px 32px;
+      margin-bottom: 24px;
+    }
+    .guide h2 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .guide ol { padding-left: 20px; }
+    .guide li { margin-bottom: 10px; font-size: 0.875rem; line-height: 1.6; }
+    .guide li code {
+      background: var(--code-bg);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.82em;
+      color: #1f2937;
+    }
+    .guide .example {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-family: monospace;
+      font-size: 0.82rem;
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 32px;
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+    footer a:hover { text-decoration: underline; }
+
+    @media (max-width: 520px) {
+      .card, .guide { padding: 20px 18px; }
+      header h1 { font-size: 1.5rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="badge">HydroOJ Addon Market</div>
+    <h1>Submit Your Addon</h1>
+    <p>
+      Fill in the details below to generate a properly-formatted discussion post.<br>
+      Your addon will appear in the market once the discussion is approved.<br>
+      <a href="https://github.com/Bryan0324/hydrooj-addons-manager" target="_blank" rel="noopener">← Back to hydrooj-addons-manager</a>
+    </p>
+  </header>
+
+  <!-- Format guide -->
+  <div class="guide">
+    <h2>📋 Submission Format</h2>
+    <ol>
+      <li>Every market listing is a <strong>GitHub Discussion</strong> in the <a href="https://github.com/Bryan0324/hydrooj-addons-market/discussions" target="_blank" rel="noopener">hydrooj-addons-market</a> repository.</li>
+      <li>The discussion <strong>title</strong> becomes the addon name shown in the market.</li>
+      <li>The discussion <strong>body</strong> must include at least one of:
+        <br><code>npm: &lt;package-name&gt;</code> — for npm packages
+        <br><code>git: &lt;https://…/repo.git&gt;</code> — for Git repositories
+      </li>
+      <li>Any other lines in the body become the addon <strong>description</strong>.</li>
+    </ol>
+    <div class="example">npm: hydrooj-plugin-example
+git: https://github.com/yourname/hydrooj-plugin-example.git
+
+A short description of what this addon does.</div>
+  </div>
+
+  <!-- Submission form -->
+  <div class="card">
+    <h2>✏️ Addon Details</h2>
+
+    <div class="field">
+      <label for="title">Addon Title <span style="color:var(--error)">*</span></label>
+      <input type="text" id="title" placeholder="e.g. My Awesome HydroOJ Plugin" autocomplete="off" />
+      <div class="error-msg" id="title-err">Title is required.</div>
+    </div>
+
+    <div class="field">
+      <label for="npm">NPM Package Name <span class="optional">(optional)</span></label>
+      <input type="text" id="npm" placeholder="e.g. hydrooj-plugin-example" autocomplete="off" />
+      <div class="hint">Must be a valid npm package name. At least one of npm or git is required.</div>
+      <div class="error-msg" id="npm-err">Enter a valid npm package name (no spaces, no capital letters).</div>
+    </div>
+
+    <div class="field">
+      <label for="git">Git URL <span class="optional">(optional)</span></label>
+      <input type="url" id="git" placeholder="e.g. https://github.com/yourname/hydrooj-plugin-example.git" autocomplete="off" />
+      <div class="hint">Must start with <code>https://</code>, <code>http://</code>, or <code>git@</code> and end with <code>.git</code>.</div>
+      <div class="error-msg" id="git-err">Must be a valid Git URL ending in .git</div>
+    </div>
+
+    <div class="field">
+      <label for="desc">Description <span class="optional">(optional)</span></label>
+      <textarea id="desc" placeholder="Briefly describe what your addon does…"></textarea>
+    </div>
+
+    <div class="field">
+      <div class="preview-label">
+        Discussion Body Preview
+        <button class="copy-btn" id="copyBtn" type="button">Copy</button>
+      </div>
+      <div id="preview"></div>
+    </div>
+
+    <div class="field" id="source-err-field" style="display:none">
+      <div style="padding: 10px 14px; background: var(--error-bg); border: 1px solid #fca5a5; border-radius: 6px; color: var(--error); font-size: 0.85rem;">
+        ⚠️ Please provide at least one of npm package name or git URL.
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn btn-primary" id="submitBtn" type="button">
+        🚀 Open GitHub Discussions
+      </button>
+      <button class="btn btn-secondary" id="resetBtn" type="button">
+        Reset
+      </button>
+    </div>
+  </div>
+
+  <footer>
+    Powered by <a href="https://github.com/Bryan0324/hydrooj-addons-manager" target="_blank" rel="noopener">hydrooj-addons-manager</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/Bryan0324/hydrooj-addons-market/discussions/new?category=general" target="_blank" rel="noopener">Open a blank discussion</a>
+  </footer>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const MARKET_REPO = 'Bryan0324/hydrooj-addons-market';
+  const DISCUSSIONS_NEW = `https://github.com/${MARKET_REPO}/discussions/new?category=general`;
+
+  const titleEl = document.getElementById('title');
+  const npmEl   = document.getElementById('npm');
+  const gitEl   = document.getElementById('git');
+  const descEl  = document.getElementById('desc');
+  const preview = document.getElementById('preview');
+
+  const titleErr = document.getElementById('title-err');
+  const npmErr   = document.getElementById('npm-err');
+  const gitErr   = document.getElementById('git-err');
+  const srcErr   = document.getElementById('source-err-field');
+
+  // ── Validators ───────────────────────────────────────────────────
+  function isValidNpm(name) {
+    if (!name) return true; // optional
+    return /^(@[a-z0-9-~][a-z0-9-._~]*\/)?[a-z0-9-~][a-z0-9-._~]*$/.test(name);
+  }
+
+  function isValidGit(url) {
+    if (!url) return true; // optional
+    return url.endsWith('.git') &&
+      (url.startsWith('https://') || url.startsWith('http://') || url.startsWith('git@'));
+  }
+
+  // ── Body builder ─────────────────────────────────────────────────
+  function buildBody() {
+    const npm  = npmEl.value.trim();
+    const git  = gitEl.value.trim();
+    const desc = descEl.value.trim();
+
+    let lines = [];
+    if (npm) lines.push(`npm: ${npm}`);
+    if (git) lines.push(`git: ${git}`);
+    if (desc) {
+      if (lines.length) lines.push('');
+      lines.push(desc);
+    }
+    return lines.join('\n');
+  }
+
+  // ── Live preview ─────────────────────────────────────────────────
+  function updatePreview() {
+    const body = buildBody();
+    preview.textContent = body || '(nothing yet — fill in at least one field above)';
+    preview.style.color = body ? '#1f2937' : '#9ca3af';
+  }
+
+  [titleEl, npmEl, gitEl, descEl].forEach(function (el) {
+    el.addEventListener('input', updatePreview);
+  });
+  updatePreview();
+
+  // ── Copy button ───────────────────────────────────────────────────
+  document.getElementById('copyBtn').addEventListener('click', function () {
+    const body = buildBody();
+    if (!body) return;
+    navigator.clipboard.writeText(body).then(function () {
+      const btn = document.getElementById('copyBtn');
+      btn.textContent = 'Copied!';
+      setTimeout(function () { btn.textContent = 'Copy'; }, 1500);
+    });
+  });
+
+  // ── Validation ────────────────────────────────────────────────────
+  function validate() {
+    let ok = true;
+
+    // Title
+    if (!titleEl.value.trim()) {
+      titleEl.classList.add('error');
+      titleErr.classList.add('visible');
+      ok = false;
+    } else {
+      titleEl.classList.remove('error');
+      titleErr.classList.remove('visible');
+    }
+
+    // NPM
+    const npm = npmEl.value.trim();
+    if (npm && !isValidNpm(npm)) {
+      npmEl.classList.add('error');
+      npmErr.classList.add('visible');
+      ok = false;
+    } else {
+      npmEl.classList.remove('error');
+      npmErr.classList.remove('visible');
+    }
+
+    // Git
+    const git = gitEl.value.trim();
+    if (git && !isValidGit(git)) {
+      gitEl.classList.add('error');
+      gitErr.classList.add('visible');
+      ok = false;
+    } else {
+      gitEl.classList.remove('error');
+      gitErr.classList.remove('visible');
+    }
+
+    // At least one source
+    if (!npm && !git) {
+      srcErr.style.display = '';
+      ok = false;
+    } else {
+      srcErr.style.display = 'none';
+    }
+
+    return ok;
+  }
+
+  // ── Submit ────────────────────────────────────────────────────────
+  document.getElementById('submitBtn').addEventListener('click', function () {
+    if (!validate()) return;
+
+    const title = titleEl.value.trim();
+    const body  = buildBody();
+
+    const url = new URL(DISCUSSIONS_NEW);
+    url.searchParams.set('title', title);
+    url.searchParams.set('body', body);
+
+    window.open(url.toString(), '_blank', 'noopener,noreferrer');
+  });
+
+  // ── Reset ─────────────────────────────────────────────────────────
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    titleEl.value = '';
+    npmEl.value   = '';
+    gitEl.value   = '';
+    descEl.value  = '';
+    [titleEl, npmEl, gitEl].forEach(function (el) { el.classList.remove('error'); });
+    [titleErr, npmErr, gitErr].forEach(function (el) { el.classList.remove('visible'); });
+    srcErr.style.display = 'none';
+    updatePreview();
+  });
+})();
+</script>
+</body>
+</html>

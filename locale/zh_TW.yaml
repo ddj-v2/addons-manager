@@ -9,3 +9,16 @@ update: 更新
 version name *unnecessary: 版本名稱 *非必要
 need to restart hydrooj to make changes work: 需要重新啟動 HydroOJ 以使更改生效
 manage_addons: 管理插件
+addon market: 插件市場
+browse and install addons from the community: 瀏覽並安裝社群插件
+back to addons manager: 返回插件管理員
+install via npm: 透過 npm 安裝
+install via git: 透過 Git 安裝
+view on github: 在 GitHub 查看
+no addons found: 未找到插件
+failed to load market: 載入市場失敗
+check that the github repo is public and correctly configured in plugin settings: 請確保插件市場 GitHub 儲存庫已設為公開，並在插件設定中正確配置
+addons: 個插件
+search addons: 搜尋插件
+upvotes: 讚數
+addon market github repo: 插件市場 GitHub 儲存庫

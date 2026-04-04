@@ -1,0 +1,141 @@
+{% extends "manage_base.html" %}
+{% block manage_content %}
+<div class="main">
+    <div class="section">
+        <div class="section__header">
+            <h1 class="section__title" data-heading>{{ _('addon market') }}</h1>
+            <p class="section__subtitle" data-heading>
+                {{ _('browse and install addons from the community') }}
+                &nbsp;&nbsp;
+                <a href="/manage/addons" class="supplementary">← {{ _('back to addons manager') }}</a>
+            </p>
+        </div>
+
+        <div class="section__body">
+            {% if error %}
+                <div class="alert alert--error" style="margin-bottom: 16px; padding: 12px 16px; background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; color: #dc2626;">
+                    <strong>{{ _('failed to load market') }}:</strong> {{ error }}
+                    <br><small>{{ _('check that the github repo is public and correctly configured in plugin settings') }}</small>
+                </div>
+            {% endif %}
+
+            {% if not error %}
+                <div style="margin-bottom: 16px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                    <input
+                        type="text"
+                        id="marketSearch"
+                        class="input"
+                        style="width: 280px;"
+                        placeholder="{{ _('search addons') }}"
+                    >
+                    <span id="addonCount" style="color: #6b7280; font-size: 0.9em;"></span>
+                </div>
+            {% endif %}
+
+            {% if addons and addons|length > 0 %}
+                <div id="addonGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px;">
+                    {% for addon in addons %}
+                    <div class="addon-card" data-title="{{ addon.title | lower }}" data-desc="{{ addon.description | lower }}"
+                         style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; background: #fff; display: flex; flex-direction: column; gap: 10px;">
+
+                        <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;">
+                            <div>
+                                <h3 style="margin: 0; font-size: 1rem; font-weight: 600;">{{ addon.title }}</h3>
+                                <span style="font-size: 0.8em; color: #6b7280;">
+                                    by <a href="https://github.com/{{ addon.author }}" target="_blank" rel="noopener">{{ addon.author }}</a>
+                                </span>
+                            </div>
+                            <span style="white-space: nowrap; font-size: 0.8em; color: #6b7280;" title="{{ _('upvotes') }}">▲ {{ addon.upvotes }}</span>
+                        </div>
+
+                        {% if addon.description %}
+                        <p style="margin: 0; font-size: 0.875rem; color: #374151; flex: 1; white-space: pre-wrap;">{{ addon.description }}</p>
+                        {% endif %}
+
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px; align-items: center;">
+                            {% if addon.npmPackage %}
+                                <code style="font-size: 0.75em; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #1f2937;">
+                                    npm: {{ addon.npmPackage }}
+                                </code>
+                            {% endif %}
+                            {% if addon.gitUrl %}
+                                <code style="font-size: 0.75em; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; color: #1f2937; word-break: break-all;">
+                                    git: {{ addon.gitUrl }}
+                                </code>
+                            {% endif %}
+                        </div>
+
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+                            {% if addon.npmPackage %}
+                                <form method="post" action="/manage/addons">
+                                    <input type="hidden" name="package_name" value="{{ addon.npmPackage }}">
+                                    <input type="hidden" name="package_version" value="">
+                                    <button type="submit" name="action" value="add" class="primary button" style="font-size: 0.85em; padding: 6px 14px;">
+                                        {{ _('install via npm') }}
+                                    </button>
+                                </form>
+                            {% endif %}
+                            {% if addon.gitUrl %}
+                                <form method="post" action="/manage/addons">
+                                    <input type="hidden" name="package_name" value="{{ addon.gitUrl }}">
+                                    <input type="hidden" name="package_version" value="">
+                                    <button type="submit" name="action" value="add" class="primary button" style="font-size: 0.85em; padding: 6px 14px; background: #16a34a;">
+                                        {{ _('install via git') }}
+                                    </button>
+                                </form>
+                            {% endif %}
+                            <a href="{{ addon.url }}" target="_blank" rel="noopener"
+                               style="font-size: 0.85em; padding: 6px 14px; border: 1px solid #d1d5db; border-radius: 4px; text-decoration: none; color: #374151; display: inline-flex; align-items: center;">
+                                {{ _('view on github') }}
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div id="noResults" style="display: none; padding: 24px; text-align: center; color: #6b7280;">
+                    {{ _('no addons found') }}
+                </div>
+
+                <script>
+                    (function () {
+                        const searchInput = document.getElementById('marketSearch');
+                        const grid = document.getElementById('addonGrid');
+                        const noResults = document.getElementById('noResults');
+                        const countEl = document.getElementById('addonCount');
+                        const cards = grid ? Array.from(grid.querySelectorAll('.addon-card')) : [];
+
+                        function updateCount(visible) {
+                            if (countEl) countEl.textContent = `${visible} / ${cards.length} {{ _("addons") }}`;
+                        }
+                        updateCount(cards.length);
+
+                        if (searchInput) {
+                            searchInput.addEventListener('input', function () {
+                                const q = searchInput.value.toLowerCase().trim();
+                                let visible = 0;
+                                cards.forEach(function (card) {
+                                    const title = (card.getAttribute('data-title') || '');
+                                    const desc = (card.getAttribute('data-desc') || '');
+                                    const match = !q || title.includes(q) || desc.includes(q);
+                                    card.style.display = match ? '' : 'none';
+                                    if (match) visible++;
+                                });
+                                updateCount(visible);
+                                if (noResults) noResults.style.display = visible === 0 ? '' : 'none';
+                            });
+                        }
+                    })();
+                </script>
+
+            {% elif not error %}
+                <div style="padding: 32px; text-align: center; color: #6b7280;">
+                    {{ _('no addons found') }}
+                    <br>
+                    <small>{{ _('addon market github repo') }}: <a href="https://github.com/{{ marketOwner }}/{{ marketRepo }}" target="_blank" rel="noopener">{{ marketOwner }}/{{ marketRepo }}</a></small>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
