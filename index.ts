@@ -284,7 +284,7 @@ export default class AddonsManagerService extends Service {
     static Config = Schema.object({
         pathToHydro: Schema.string().description('Path to Hydro').required(),
         marketGithubOwner: Schema.string().description('GitHub owner for addon market discussions').default('Bryan0324'),
-        marketGithubRepo: Schema.string().description('GitHub repo for addon market discussions').default('hydrooj-addons-market'),
+        marketGithubRepo: Schema.string().description('GitHub repo for addon market discussions').default('hydrooj-addons-manager'),
         marketFetchLimit: Schema.number().description('Max number of addon discussions to fetch from GitHub (1–100)').default(100),
     });
 
