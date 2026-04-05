@@ -283,13 +283,13 @@ async function sendCommand(command: string, args: string[], cwd: string): Promis
 export default class AddonsManagerService extends Service {
     static Config = Schema.object({
         pathToHydro: Schema.string().description('Path to Hydro').required(),
-        marketGithubOwner: Schema.string().description('GitHub owner for addon market discussions').default('Bryan0324'),
-        marketGithubRepo: Schema.string().description('GitHub repo for addon market discussions').default('hydrooj-addons-manager'),
+        marketGithubOwner: Schema.string().description('GitHub owner for addon market discussions').default('ddj-v2'),
+        marketGithubRepo: Schema.string().description('GitHub repo for addon market discussions').default('addons-manager'),
         marketFetchLimit: Schema.number().description('Max number of addon discussions to fetch from GitHub (1–100)').default(100),
     });
 
     constructor(ctx: Context, config: ReturnType<typeof AddonsManagerService.Config>) {
-        super(ctx, 'hydrooj-addons-manager');
+        super(ctx, 'addons-manager');
         ctx.Route('manage_addons', ROUTE_PATH, AddonsManagerHandler, PRIV.PRIV_ALL);
         ctx.Route('manage_addons_market', MARKET_ROUTE_PATH, AddonsMarketHandler, PRIV.PRIV_ALL);
         global.Hydro.ui.inject('ControlPanel', 'manage_addons');

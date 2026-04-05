@@ -1,9 +1,9 @@
 {
-  "name": "@ddj-v2/hydrooj-addons-manager",
-  "version": "1.0.0",
+  "name": "@ddj-v2/addons-manager",
+  "version": "2.0.0",
   "description": "addons manager for hydrooj",
   "main": "index.ts",
-  "author": "https://github.com/Bryan0324",
+  "author": "https://github.com/ddj-v2",
   "dependencies": {
     "semver": "^7.6.0",
     "validate-npm-package-name": "^5.0.0"
@@ -19,6 +19,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ddj-v2/hydrooj-addons-manager.git"
+    "url": "https://github.com/ddj-v2/addons-manager.git"
   }
 }
